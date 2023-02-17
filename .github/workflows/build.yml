@@ -1,0 +1,11 @@
+on:
+  workflow_call:
+
+jobs:
+  build:
+    uses: Flaminel/universal-workflows/.github/workflows/dotnet.build.app.yml@main
+    with:
+      dockerRepository: flaminel/orchestrator
+      githubContext: ${{ toJSON(github) }}
+    secrets:
+      SECRETS_TOKEN: ${{ secrets.SECRETS_TOKEN }}
