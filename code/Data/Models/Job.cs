@@ -17,9 +17,9 @@ public sealed class Job
     public override int GetHashCode()
     {
         return Id.GetHashCode()
-            + Name.GetHashCode()
+            + Name.GetHashCode(StringComparison.InvariantCulture)
             + Status.GetHashCode()
-            + QueueName.GetHashCode()
+            + QueueName.GetHashCode(StringComparison.InvariantCulture)
             + Triggers.Select(x => x.GetHashCode()).Sum();
     }
 

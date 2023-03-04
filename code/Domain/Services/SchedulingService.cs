@@ -1,4 +1,5 @@
-﻿using Common.Constants;
+﻿using System.Globalization;
+using Common.Constants;
 using Data.DbContexts;
 using Data.Enums;
 using Data.Models;
@@ -55,7 +56,6 @@ public sealed class SchedulingService : ISchedulingService
         {
             OrchestratorContext orchestratorContext = scope.ServiceProvider.GetRequiredService<OrchestratorContext>();
 
-            // TODO create repo/unit of work something
             List<Job> databaseJobs = await orchestratorContext.Jobs
                 .Include(job => job.Triggers)
                 .Where(job => job.Status == JobStatus.Enabled)
@@ -104,7 +104,7 @@ public sealed class SchedulingService : ISchedulingService
         IJobDetail jobDetail = JobBuilder
             .Create(typeof(PubMessageJob))
             .WithIdentity(jobId)
-            .UsingJobData(GeneralConstants.JOB_QUEUE_KEY, job.QueueName)
+            .UsingJobData(GeneralConstants.JobQueueKey, job.QueueName)
             .StoreDurably()
             .Build();
 
@@ -153,12 +153,7 @@ public sealed class SchedulingService : ISchedulingService
                     .StartNow()
                     .WithCronSchedule(
                         trigger.CronExpression,
-                        x =>
-                        {
-                            _ = x
-                                .WithMisfireHandlingInstructionFireAndProceed()
-                                .InTimeZone(TimeZoneInfo.Utc);
-                        })
+                        x => x.WithMisfireHandlingInstructionFireAndProceed().InTimeZone(TimeZoneInfo.Utc))
                     .ForJob(jobDetail)
                     .Build();
 
@@ -167,7 +162,7 @@ public sealed class SchedulingService : ISchedulingService
                 _logger.LogInformation(
                     "Scheduled trigger {TriggerId} with next fire time at {Date}",
                     triggerId,
-                    jobTrigger.GetNextFireTimeUtc()?.ToString("dd-MM-yyyy HH:ss K"));
+                    jobTrigger.GetNextFireTimeUtc()?.ToString(GeneralConstants.TriggerDateTimeFormat, CultureInfo.InvariantCulture));
             }
         }
 

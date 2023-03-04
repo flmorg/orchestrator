@@ -19,7 +19,7 @@ public sealed class PubMessageJob : IJob
     public async Task Execute(IJobExecutionContext context)
     {
         string? queue = context.JobDetail.JobDataMap
-            .GetString(GeneralConstants.JOB_QUEUE_KEY)
+            .GetString(GeneralConstants.JobQueueKey)
             ?.Trim();
 
         string jobId = context.JobDetail.Key.Name;

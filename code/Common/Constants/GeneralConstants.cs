@@ -2,5 +2,7 @@
 
 public static class GeneralConstants
 {
-    public const string JOB_QUEUE_KEY = "queue";
+    public const string JobQueueKey = "queue";
+
+    public const string TriggerDateTimeFormat = "dd-MM-yyyy HH:mm:ss K";
 }

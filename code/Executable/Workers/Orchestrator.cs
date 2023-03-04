@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Executable.Workers;
 
-internal class Orchestrator : BackgroundService
+public sealed class Orchestrator : BackgroundService
 {
     private readonly ILogger<Orchestrator> _logger;
     private readonly IServiceProvider _serviceProvider;
@@ -25,21 +25,21 @@ internal class Orchestrator : BackgroundService
         _rabbitMqConnection = rabbitMqConnection ?? throw new ArgumentNullException(nameof(rabbitMqConnection));
     }
 
-    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Worker is starting");
 
         await using (AsyncServiceScope scope = _serviceProvider.CreateAsyncScope())
         {
             OrchestratorContext orchestratorContext = scope.ServiceProvider.GetRequiredService<OrchestratorContext>();
-            await orchestratorContext.Database.MigrateAsync(cancellationToken);
+            await orchestratorContext.Database.MigrateAsync(stoppingToken);
         }
 
-        await _schedulingService.CreateAndStartScheduler(cancellationToken);
+        await _schedulingService.CreateAndStartScheduler(stoppingToken);
 
         _rabbitMqConnection.ConfigureQueues(GetQueueConfigurations());
 
-        while (!cancellationToken.IsCancellationRequested)
+        while (!stoppingToken.IsCancellationRequested)
         {
             await _schedulingService.Schedule();
             await Task.Delay(10_000, CancellationToken.None);
@@ -55,16 +55,7 @@ internal class Orchestrator : BackgroundService
         await base.StopAsync(cancellationToken);
     }
 
-    private static IEnumerable<QueueConfiguration> GetQueueConfigurations()
+    private static List<QueueConfiguration> GetQueueConfigurations() => new()
     {
-        // Return the queue configurations that you need.
-        return new List<QueueConfiguration>
-        {
-            new()
-            {
-                QueueName = "test",
-                MessageType = typeof(string)
-            }
-        };
-    }
+    };
 }

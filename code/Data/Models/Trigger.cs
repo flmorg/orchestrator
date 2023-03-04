@@ -18,7 +18,7 @@ public sealed class Trigger
     {
         return Id.GetHashCode()
             + JobId.GetHashCode()
-            + CronExpression.GetHashCode()
+            + CronExpression.GetHashCode(StringComparison.InvariantCulture)
             + Status.GetHashCode();
     }
 
