@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <PackageReference Include="EFCore.NamingConventions" Version="7.0.2" />
-    <PackageReference Include="FLM.EditorConfig" Version="1.0.3" />
     <PackageReference Include="FLM.RabbitMQ" Version="1.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.3">
       <PrivateAssets>all</PrivateAssets>

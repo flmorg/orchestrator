@@ -1,4 +1,4 @@
-﻿using Data.DbContexts;
+using Data.DbContexts;
 using Domain.Services.Interfaces;
 using FLM.RabbitMQ.Configuration;
 using FLM.RabbitMQ.Core.Interfaces;
@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Executable.Workers;
 
-public sealed class Orchestrator : BackgroundService
+internal sealed class Orchestrator : BackgroundService
 {
     private readonly ILogger<Orchestrator> _logger;
     private readonly IServiceProvider _serviceProvider;
