@@ -7,5 +7,6 @@ jobs:
     with:
       dockerRepository: flaminel/orchestrator
       githubContext: ${{ toJSON(github) }}
+      baseImage: 8.0-preview-alpine
     secrets:
       SECRETS_TOKEN: ${{ secrets.SECRETS_TOKEN }}

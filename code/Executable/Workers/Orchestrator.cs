@@ -32,7 +32,18 @@ internal sealed class Orchestrator : BackgroundService
         await using (AsyncServiceScope scope = _serviceProvider.CreateAsyncScope())
         {
             OrchestratorContext orchestratorContext = scope.ServiceProvider.GetRequiredService<OrchestratorContext>();
+
+            _logger.LogInformation(
+                "Pending migrations: {Count}",
+                orchestratorContext.Database.GetPendingMigrations().Count());
+
             await orchestratorContext.Database.MigrateAsync(stoppingToken);
+            string lastAppliedMigration = (await orchestratorContext.Database.GetAppliedMigrationsAsync(stoppingToken))
+                .Last();
+
+            _logger.LogInformation(
+                "Current database version: {Version}",
+                lastAppliedMigration);
         }
 
         await _schedulingService.CreateAndStartScheduler(stoppingToken);
