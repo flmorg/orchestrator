@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using Data.DbContexts;
+﻿using Data.DbContexts;
 using Domain.Jobs;
 using Domain.Services;
 using Domain.Services.Interfaces;
@@ -13,6 +12,7 @@ using Serilog;
 using Serilog.Enrichers.Span;
 using Serilog.Events;
 using Serilog.Exceptions;
+using Serilog.Formatting.Json;
 
 namespace Executable.Extensions;
 
@@ -63,7 +63,7 @@ internal static class HostingExtensions
             {
                 loggerConfiguration
                     .WriteTo.Async(
-                        configure: sinkConfiguration => sinkConfiguration.Console(formatProvider: CultureInfo.InvariantCulture),
+                        configure: sinkConfiguration => sinkConfiguration.Console(new JsonFormatter(renderMessage: true)),
                         blockWhenFull: true)
                     .Enrich.WithEnvironmentName()
                     .Enrich.WithThreadId()

@@ -1,10 +1,10 @@
-﻿using System.Globalization;
-using Executable.Extensions;
+﻿using Executable.Extensions;
 using Serilog;
+using Serilog.Formatting.Json;
 
 #pragma warning disable CA1852 // Seal internal types
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
+    .WriteTo.Console(new JsonFormatter(renderMessage: true))
     .CreateBootstrapLogger();
 #pragma warning restore CA1852 // Seal internal types
 
