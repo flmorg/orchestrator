@@ -6,13 +6,9 @@ using Executable.Workers;
 using FLM.RabbitMQ.Configuration;
 using FLM.RabbitMQ.Core;
 using FLM.RabbitMQ.Core.Interfaces;
+using FLM.Serilog.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
-using Serilog;
-using Serilog.Enrichers.Span;
-using Serilog.Events;
-using Serilog.Exceptions;
-using Serilog.Formatting.Json;
 
 namespace Executable.Extensions;
 
@@ -25,7 +21,6 @@ internal static class HostingExtensions
                 IConfiguration configuration = context.Configuration;
                 services
                     .Configure<RabbitMQConfiguration>(configuration.GetSection(nameof(RabbitMQConfiguration)))
-                    .AddLogging(configure => configure.AddSerilog())
                     .AddQuartzHostedService(options => options.WaitForJobsToComplete = true)
                     .AddQuartz(q =>
                     {
@@ -59,47 +54,5 @@ internal static class HostingExtensions
                     .AddSingleton<ISchedulingService, SchedulingService>();
             })
             .ConfigureLogging(builder => builder.ClearProviders())
-            .UseSerilog((context, loggerConfiguration) =>
-            {
-                loggerConfiguration
-                    .WriteTo.Async(
-                        configure: sinkConfiguration => sinkConfiguration.Console(new JsonFormatter(renderMessage: true)),
-                        blockWhenFull: true)
-                    .Enrich.WithEnvironmentName()
-                    .Enrich.WithThreadId()
-                    .Enrich.WithProcessId()
-                    .Enrich.WithExceptionDetails()
-                    .Enrich.WithSpan();
-
-                Dictionary<string, LogEventLevel> logLevelOverrides;
-
-                if (context.HostingEnvironment.IsDevelopment())
-                {
-                    loggerConfiguration.MinimumLevel.Debug();
-
-                    logLevelOverrides = new()
-                    {
-                        { "Microsoft.EntityFrameworkCore", LogEventLevel.Warning },
-                        { "Quartz", LogEventLevel.Warning }
-                    };
-                }
-                else
-                {
-                    loggerConfiguration.MinimumLevel.Information();
-
-                    logLevelOverrides = new()
-                    {
-                        { "System", LogEventLevel.Warning },
-                        { "Microsoft", LogEventLevel.Warning },
-                        { "Microsoft.Hosting.Lifetime", LogEventLevel.Information },
-                        { "Microsoft.EntityFrameworkCore", LogEventLevel.Warning },
-                        { "Quartz", LogEventLevel.Warning }
-                    };
-                }
-
-                foreach (KeyValuePair<string, LogEventLevel> pair in logLevelOverrides)
-                {
-                    loggerConfiguration.MinimumLevel.Override(pair.Key, pair.Value);
-                }
-            });
+            .UseSerilog();
 }

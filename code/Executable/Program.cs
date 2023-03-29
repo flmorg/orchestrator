@@ -1,12 +1,9 @@
 ﻿using Executable.Extensions;
+using FLM.Serilog.Extensions;
 using Serilog;
-using Serilog.Formatting.Json;
 
-#pragma warning disable CA1852 // Seal internal types
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console(new JsonFormatter(renderMessage: true))
-    .CreateBootstrapLogger();
-#pragma warning restore CA1852 // Seal internal types
+    .CreateDefaultBootstrapLogger();
 
 try
 {
