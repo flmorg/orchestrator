@@ -16,7 +16,6 @@ try
 catch (Exception exception)
 {
     Log.Logger.Fatal(exception, "Application failed to start");
-    throw;
 }
 finally
 {
