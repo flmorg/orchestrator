@@ -17,7 +17,7 @@ deployment:
           cpu: 500m
           memory: 128Mi
       envFromSecret:
-        - secretName: connections-secret
+        - secretName: orchestrator-secret
           envs:
             - name: ConnectionStrings__Orchestrator
               key: orchestratorDb
@@ -29,7 +29,7 @@ deployment:
               key: rabbitMqPassword
 
 secrets:
-  - name: connections-secret
+  - name: orchestrator-secret
     type: Opaque
     data:
       orchestratorDb: server=$MySQLHost;port=3306;database=orchestrator;uid=$MySQLUser;pwd='$MySQLPassword';sslMode=Required

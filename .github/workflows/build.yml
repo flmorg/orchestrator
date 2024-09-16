@@ -1,12 +1,11 @@
 on:
+  workflow_dispatch:
   workflow_call:
 
 jobs:
   build:
-    uses: Flaminel/universal-workflows/.github/workflows/dotnet.build.app.yml@main
+    uses: flmorg/universal-workflows/.github/workflows/dotnet.build.app.yml@main
     with:
       dockerRepository: flaminel/orchestrator
       githubContext: ${{ toJSON(github) }}
-      baseImage: 8.0-preview-alpine
-    secrets:
-      SECRETS_TOKEN: ${{ secrets.SECRETS_TOKEN }}
+    secrets: inherit
