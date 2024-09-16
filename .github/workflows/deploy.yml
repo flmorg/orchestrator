@@ -1,10 +1,10 @@
 on:
   workflow_dispatch:
   workflow_call:
-  push:
-    paths:
-      - 'chart/**'
-    branches: [ main ]
+  # push:
+  #   paths:
+  #     - 'chart/**'
+  #   branches: [ main ]
 
 jobs:
   deploy:

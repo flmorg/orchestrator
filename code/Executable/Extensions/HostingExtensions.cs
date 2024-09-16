@@ -1,12 +1,10 @@
-﻿using Data.DbContexts;
-using Domain.Jobs;
-using Domain.Services;
-using Domain.Services.Interfaces;
-using Executable.Workers;
-using FLM.RabbitMQ.Configuration;
-using FLM.RabbitMQ.Core;
-using FLM.RabbitMQ.Core.Interfaces;
-using FLM.Serilog.Extensions;
+﻿using Common.Configuration;
+using Data.DbContexts;
+using Domain.Extensions;
+using Domain.Features.PriceGrabber.Jobs;
+using Domain.Features.PriceGrabber.Services;
+using MassTransit;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Quartz;
 
@@ -14,45 +12,79 @@ namespace Executable.Extensions;
 
 internal static class HostingExtensions
 {
-    public static IHostBuilder Configure(this IHostBuilder hostBuilder) =>
-        hostBuilder
-            .ConfigureServices((context, services) =>
+    public static IServiceCollection CustomConfigure(this IServiceCollection services, WebApplicationBuilder context)
+    {
+        IConfiguration configuration = context.Configuration;
+
+        services.AddControllers();
+
+        return services
+            .AddQuartz(q =>
             {
-                IConfiguration configuration = context.Configuration;
-                services
-                    .Configure<RabbitMQConfiguration>(configuration.GetSection(nameof(RabbitMQConfiguration)))
-                    .AddQuartzHostedService(options => options.WaitForJobsToComplete = true)
-                    .AddQuartz(q =>
-                    {
-                        // https://www.quartz-scheduler.net/documentation/quartz-3.x/packages/microsoft-di-integration.html#di-aware-job-factories
-                        q.UseMicrosoftDependencyInjectionJobFactory();
-                        q.UseSimpleTypeLoader();
-                        q.UseInMemoryStore();
-                        q.UseDefaultThreadPool(tp => tp.MaxConcurrency = 10);
-                    })
-                    .AddDbContext<OrchestratorContext>(optionsBuilder =>
-                    {
-                        string? connectionString = configuration.GetConnectionString("Orchestrator");
+                // https://www.quartz-scheduler.net/documentation/quartz-3.x/packages/microsoft-di-integration.html#di-aware-job-factories
+                q.UseSimpleTypeLoader();
+                q.UseInMemoryStore();
+                q.UseDefaultThreadPool(tp => tp.MaxConcurrency = 10);
 
-                        optionsBuilder
-                            .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
-                            .UseSnakeCaseNamingConvention();
+                ScheduleConfig? scheduleConfig = configuration
+                    .GetRequiredSection(nameof(ScheduleConfig))
+                    .Get<ScheduleConfig>();
 
-                        if (!context.HostingEnvironment.IsDevelopment())
-                        {
-                            return;
-                        }
+                if (scheduleConfig is null)
+                {
+                    throw new ArgumentException(nameof(scheduleConfig));
+                }
 
-                        optionsBuilder
-                            .EnableSensitiveDataLogging()
-                            .EnableDetailedErrors();
-                    })
-
-                    .AddTransient<PubMessageJob>()
-                    .AddHostedService<Orchestrator>()
-                    .AddSingleton<IRabbitMQConnection, RabbitMQConnection>()
-                    .AddSingleton<ISchedulingService, SchedulingService>();
+                JobKey priceGrabberJobKey = new(nameof(PriceGrabberJob));
+                q.AddJob<PriceGrabberJob>(opts => opts.WithIdentity(priceGrabberJobKey));
+                q.AddTrigger(opts => opts
+                    .ForJob(priceGrabberJobKey)
+                    .WithIdentity(nameof(PriceGrabberJob))
+                    .Schedule<PriceGrabberJob>(context.Environment, scheduleConfig));
             })
-            .ConfigureLogging(builder => builder.ClearProviders())
-            .UseSerilog();
+            .AddQuartzHostedService(options =>
+            {
+                options.WaitForJobsToComplete = true;
+                options.AwaitApplicationStarted = true;
+            })
+            .AddMassTransit(x =>
+            {
+                RabbitMqConfig? rabbitmqConfig = configuration
+                    .GetRequiredSection(nameof(RabbitMqConfig))
+                    .Get<RabbitMqConfig>();
+
+                if (rabbitmqConfig is null)
+                {
+                    throw new ArgumentException(nameof(rabbitmqConfig));
+                }
+
+                x.UsingRabbitMq((ctx, cfg) =>
+                {
+                    cfg.Host(rabbitmqConfig.Host, rabbitmqConfig.VirtualHost, h =>
+                    {
+                        h.Username(rabbitmqConfig.Username);
+                        h.Password(rabbitmqConfig.Password);
+                    });
+                });
+            })
+            .AddDbContext<OrchestratorContext>(optionsBuilder =>
+            {
+                string? connectionString = configuration.GetConnectionString("Orchestrator");
+
+                optionsBuilder
+                    .UseNpgsql(connectionString)
+                    .UseSnakeCaseNamingConvention();
+
+                if (!context.Environment.IsDevelopment())
+                {
+                    return;
+                }
+
+                optionsBuilder
+                    .EnableSensitiveDataLogging()
+                    .EnableDetailedErrors();
+            })
+            .AddScoped<PriceGrabberJob>()
+            .AddScoped<PriceGrabberService>();
+    }
 }

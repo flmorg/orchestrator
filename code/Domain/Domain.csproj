@@ -1,15 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FLM.RabbitMQ" Version="1.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
-    <PackageReference Include="Quartz" Version="3.6.0" />
+    <PackageReference Include="MassTransit.Abstractions" Version="8.2.5" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.0-rc.1.24431.7" />
+    <PackageReference Include="Quartz" Version="3.13.0" />
   </ItemGroup>
 
   <ItemGroup>

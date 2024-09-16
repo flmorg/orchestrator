@@ -5,38 +5,31 @@ deployment:
     maxSurge: 1
     maxUnavailable: 1
   containers:
-    -
-      name: orchestrator
+    - name: orchestrator
       image:
         repository: flaminel/orchestrator
         tag: latest
       resources:
         requests:
-          cpu: 500m
-          memory: 128Mi
+          cpu: 0m
+          memory: 0Mi
         limits:
           cpu: 500m
           memory: 128Mi
       envFromSecret:
-        -
-          secretName: connections-secret
+        - secretName: connections-secret
           envs:
-            -
-              name: ConnectionStrings__Orchestrator
+            - name: ConnectionStrings__Orchestrator
               key: orchestratorDb
-            -
-              name: RabbitMQConfiguration__Host
+            - name: RabbitMqConfig__Host
               key: rabbitMqHost
-            -
-              name: RabbitMQConfiguration__Username
+            - name: RabbitMqConfig__Username
               key: rabbitMqUser
-            -
-              name: RabbitMQConfiguration__Password
+            - name: RabbitMqConfig__Password
               key: rabbitMqPassword
 
 secrets:
-  -
-    name: connections-secret
+  - name: connections-secret
     type: Opaque
     data:
       orchestratorDb: server=$MySQLHost;port=3306;database=orchestrator;uid=$MySQLUser;pwd='$MySQLPassword';sslMode=Required

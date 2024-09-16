@@ -4,6 +4,7 @@ using Data.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -16,80 +17,95 @@ namespace Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.2")
-                .HasAnnotation("Relational:MaxIdentifierLength", 64);
+                .HasAnnotation("ProductVersion", "9.0.0-rc.1.24451.1")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            modelBuilder.Entity("Data.Models.Job", b =>
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Data.Features.PriceGrabber.Models.Product", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)")
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("longtext")
-                        .HasColumnName("name");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
 
-                    b.Property<string>("QueueName")
-                        .IsRequired()
-                        .HasColumnType("longtext")
-                        .HasColumnName("queue_name");
+                    b.Property<DateTime?>("LastRefreshedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_refreshed_at");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("int")
-                        .HasColumnName("status");
+                    b.Property<int>("State")
+                        .HasColumnType("integer")
+                        .HasColumnName("state");
+
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("store_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("url");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea")
+                        .HasColumnName("version");
 
                     b.HasKey("Id")
-                        .HasName("pk_jobs");
+                        .HasName("pk_products");
 
-                    b.ToTable("jobs", (string)null);
+                    b.HasIndex("StoreId")
+                        .HasDatabaseName("ix_products_store_id");
+
+                    b.ToTable("products", (string)null);
                 });
 
-            modelBuilder.Entity("Data.Models.Trigger", b =>
+            modelBuilder.Entity("Data.Features.PriceGrabber.Models.Store", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)")
+                        .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("CronExpression")
+                    b.Property<string>("Domain")
                         .IsRequired()
-                        .HasColumnType("longtext")
-                        .HasColumnName("cron_expression");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("domain");
 
-                    b.Property<Guid>("JobId")
-                        .HasColumnType("char(36)")
-                        .HasColumnName("job_id");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int")
-                        .HasColumnName("status");
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea")
+                        .HasColumnName("version");
 
                     b.HasKey("Id")
-                        .HasName("pk_triggers");
+                        .HasName("pk_stores");
 
-                    b.HasIndex("JobId")
-                        .HasDatabaseName("ix_triggers_job_id");
-
-                    b.ToTable("triggers", (string)null);
+                    b.ToTable("stores", (string)null);
                 });
 
-            modelBuilder.Entity("Data.Models.Trigger", b =>
+            modelBuilder.Entity("Data.Features.PriceGrabber.Models.Product", b =>
                 {
-                    b.HasOne("Data.Models.Job", "Job")
-                        .WithMany("Triggers")
-                        .HasForeignKey("JobId")
+                    b.HasOne("Data.Features.PriceGrabber.Models.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_triggers_jobs_job_id");
+                        .HasConstraintName("fk_products_stores_store_id");
 
-                    b.Navigation("Job");
-                });
-
-            modelBuilder.Entity("Data.Models.Job", b =>
-                {
-                    b.Navigation("Triggers");
+                    b.Navigation("Store");
                 });
 #pragma warning restore 612, 618
         }
